@@ -14,8 +14,11 @@ export class AppComponent implements OnInit {
   constructor(private markdownService: MarkdownService) {}
 
   ngOnInit(): void {
-    // Initialize with a new file
-    this.markdownService.setCurrentFile(new MarkdownFile());
+    // Initialize with a new file after a short delay to ensure database is ready
+    setTimeout(() => {
+      this.markdownService.setCurrentFile(new MarkdownFile());
+      console.log('App initialized with a new file');
+    }, 500);
   }
 
   updatePreview(content: string): void {

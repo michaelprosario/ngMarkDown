@@ -20,9 +20,23 @@ export class MarkdownDatabase extends Dexie {
 export class MarkdownService {
   private db: MarkdownDatabase;
   private currentFile = new BehaviorSubject<MarkdownFile>(new MarkdownFile());
+  private initialized = false;
   
   constructor() {
     this.db = new MarkdownDatabase();
+    this.initDatabase();
+  }
+  
+  private async initDatabase(): Promise<void> {
+    try {
+      // Check if the database is accessible by performing a simple operation
+      await this.db.markdownFiles.count();
+      this.initialized = true;
+      console.log('IndexedDB initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize IndexedDB:', error);
+      alert('Failed to initialize the database. Some features may not work.');
+    }
   }
 
   getCurrentFile(): Observable<MarkdownFile> {
@@ -40,9 +54,29 @@ export class MarkdownService {
   async getFileById(id: number): Promise<MarkdownFile | undefined> {
     return await this.db.markdownFiles.get(id);
   }
-
   async createFile(file: MarkdownFile): Promise<number> {
-    return await this.db.markdownFiles.add(file);
+    if (!this.initialized) {
+      await this.initDatabase();
+    }
+    
+    // Create a new instance to ensure proper data conversion
+    const newFile = {
+      name: file.name || 'Untitled',
+      content: file.content || '',
+      createdAt: file.createdAt || new Date(),
+      updatedAt: new Date()
+    };
+    
+    try {
+      // Log for debugging
+      console.log('Creating new file:', newFile);
+      const id = await this.db.markdownFiles.add(newFile);
+      console.log('File created with ID:', id);
+      return id;
+    } catch (error) {
+      console.error('Error creating file:', error);
+      throw error;
+    }
   }
 
   async updateFile(file: MarkdownFile): Promise<number | undefined> {

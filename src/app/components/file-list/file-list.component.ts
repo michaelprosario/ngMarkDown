@@ -24,6 +24,12 @@ export class FileListComponent implements OnInit, OnDestroy {
     this.loadFiles();
     this.currentFileSub = this.markdownService.getCurrentFile().subscribe(file => {
       this.currentFile = file;
+      
+      // If the file has an ID, it means it was saved to IndexedDB
+      // Refresh the file list to show the newly saved file
+      if (file && file.id) {
+        this.loadFiles();
+      }
     });
   }
 

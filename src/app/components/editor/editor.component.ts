@@ -64,17 +64,66 @@ export class EditorComponent implements OnInit, OnDestroy {
 
   async saveFile(): Promise<void> {
     try {
-      if (this.currentFile.id) {
-        await this.markdownService.updateFile(this.currentFile);
-      } else {
-        const id = await this.markdownService.createFile(this.currentFile);
-        this.currentFile.id = id;
-        this.markdownService.setCurrentFile(this.currentFile);
+      console.log('Saving file:', this.currentFile);
+      
+      // Check if we have content or name
+      if (!this.currentFile.name.trim()) {
+        this.currentFile.name = 'Untitled';
       }
+      
+      if (this.currentFile.id) {
+        console.log('Updating existing file with ID:', this.currentFile.id);
+        await this.markdownService.updateFile(this.currentFile);
+        console.log('File updated successfully');
+      } else {
+        console.log('Creating new file');
+        const id = await this.markdownService.createFile(this.currentFile);
+        console.log('File created with ID:', id);
+        
+        // Important: Create a new object to avoid reference issues
+        const savedFile = new MarkdownFile(
+          id,
+          this.currentFile.name,
+          this.currentFile.content,
+          this.currentFile.createdAt,
+          new Date()
+        );
+        
+        this.currentFile = savedFile;
+        this.markdownService.setCurrentFile(savedFile);
+      }
+      
+      // Show success notification
+      this.showToast('File saved successfully!');
     } catch (error) {
       console.error('Error saving file:', error);
       alert('Failed to save your file. Please try again.');
     }
+  }
+  
+  // Simple toast notification
+  private showToast(message: string): void {
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed bottom-0 end-0 p-3';
+    toast.style.zIndex = '5';
+    
+    toast.innerHTML = `
+      <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+          <strong class="me-auto">Notification</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+        <div class="toast-body">
+          ${message}
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
   }
 
   async saveFileName(): Promise<void> {

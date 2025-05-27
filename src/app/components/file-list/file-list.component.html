@@ -1,0 +1,38 @@
+<div class="card">
+  <div class="card-header bg-primary text-white">
+    Your Files
+  </div>
+  <div class="list-group file-list">
+    <div *ngIf="files.length === 0" class="list-group-item text-center text-muted py-3">
+      No files yet. Create or import one to get started!
+    </div>
+    <div *ngFor="let file of files" class="list-group-item list-group-item-action" 
+         [class.active]="currentFile?.id === file.id" (click)="loadFile(file)">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <span *ngIf="!isRenaming || renamingFileId !== file.id">{{ file.name }}</span>
+          <input *ngIf="isRenaming && renamingFileId === file.id"
+                 class="form-control form-control-sm"
+                 type="text"
+                 [(ngModel)]="newFileName"
+                 (keyup.enter)="completeRename()"
+                 (keyup.escape)="cancelRename()"
+                 (click)="$event.stopPropagation()"
+                 #renameInput>
+        </div>
+        <div>
+          <button class="btn btn-sm btn-link" (click)="startRename(file, $event)">
+            <i class="bi bi-pencil-fill"></i>
+          </button>
+          <button class="btn btn-sm btn-link text-success" (click)="exportFile(file, $event)">
+            <i class="bi bi-download"></i>
+          </button>
+          <button class="btn btn-sm btn-link text-danger" (click)="deleteFile(file, $event)">
+            <i class="bi bi-trash-fill"></i>
+          </button>
+        </div>
+      </div>
+      <small class="text-muted">Last edited: {{ file.updatedAt | date:'medium' }}</small>
+    </div>
+  </div>
+</div>

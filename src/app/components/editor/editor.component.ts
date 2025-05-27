@@ -1,0 +1,107 @@
+import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Subject, Subscription, debounceTime } from 'rxjs';
+import { MarkdownFile } from '../../models/markdown-file.model';
+import { MarkdownService } from '../../services/markdown.service';
+import { MarkdownFormatEvent } from '../toolbar/toolbar.component';
+
+@Component({
+  selector: 'app-editor',
+  templateUrl: './editor.component.html',
+  styleUrls: ['./editor.component.scss']
+})
+export class EditorComponent implements OnInit, OnDestroy {
+  @Output() contentChanged = new EventEmitter<string>();
+  @ViewChild('editor') editorElement!: ElementRef;
+  
+  currentFile: MarkdownFile = new MarkdownFile();
+  private contentSubject = new Subject<string>();
+  private subscriptions: Subscription[] = [];
+  private autoSaveTimer: any;
+  
+  constructor(private markdownService: MarkdownService) { }
+
+  ngOnInit(): void {
+    // Subscribe to content changes with debounce for live preview
+    this.subscriptions.push(
+      this.contentSubject
+        .pipe(debounceTime(300))
+        .subscribe(content => {
+          this.contentChanged.emit(content);
+        })
+    );
+    
+    // Subscribe to current file changes
+    this.subscriptions.push(
+      this.markdownService.getCurrentFile().subscribe(file => {
+        this.currentFile = {...file};
+        // Emit the initial content
+        this.contentChanged.emit(this.currentFile.content);
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    if (this.autoSaveTimer) {
+      clearTimeout(this.autoSaveTimer);
+    }
+  }
+
+  onContentChange(): void {
+    this.contentSubject.next(this.currentFile.content);
+    this.setupAutoSave();
+  }
+
+  setupAutoSave(): void {
+    if (this.autoSaveTimer) {
+      clearTimeout(this.autoSaveTimer);
+    }
+    
+    this.autoSaveTimer = setTimeout(() => {
+      this.saveFile();
+    }, 2000); // Auto save after 2 seconds of inactivity
+  }
+
+  async saveFile(): Promise<void> {
+    try {
+      if (this.currentFile.id) {
+        await this.markdownService.updateFile(this.currentFile);
+      } else {
+        const id = await this.markdownService.createFile(this.currentFile);
+        this.currentFile.id = id;
+        this.markdownService.setCurrentFile(this.currentFile);
+      }
+    } catch (error) {
+      console.error('Error saving file:', error);
+      alert('Failed to save your file. Please try again.');
+    }
+  }
+
+  async saveFileName(): Promise<void> {
+    if (!this.currentFile.name.trim()) {
+      this.currentFile.name = 'Untitled';
+    }
+    
+    await this.saveFile();
+  }
+
+  insertFormat(event: MarkdownFormatEvent): void {
+    const textArea = this.editorElement.nativeElement;
+    const start = textArea.selectionStart;
+    const end = textArea.selectionEnd;
+    const selectedText = this.currentFile.content.substring(start, end);
+    const beforeText = this.currentFile.content.substring(0, start);
+    const afterText = this.currentFile.content.substring(end);
+    
+    this.currentFile.content = beforeText + event.prefix + selectedText + event.suffix + afterText;
+    
+    // Set the cursor position after the inserted text
+    setTimeout(() => {
+      textArea.focus();
+      const newCursorPos = start + event.prefix.length + selectedText.length + event.suffix.length;
+      textArea.selectionStart = textArea.selectionEnd = newCursorPos;
+    }, 0);
+    
+    this.onContentChange();
+  }
+}

@@ -1,0 +1,25 @@
+<div class="editor-container">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="form-floating flex-grow-1">
+      <input 
+        type="text" 
+        class="form-control" 
+        id="fileName" 
+        [(ngModel)]="currentFile.name" 
+        (blur)="saveFileName()"
+        placeholder="File name">
+      <label for="fileName">File Name</label>
+    </div>
+    <button class="btn btn-success ms-2" (click)="saveFile()">
+      <i class="bi bi-save"></i> Save
+    </button>
+  </div>
+  
+  <app-toolbar (format)="insertFormat($event)"></app-toolbar>
+  
+  <textarea 
+    class="form-control" 
+    [(ngModel)]="currentFile.content" 
+    (ngModelChange)="onContentChange()"
+    #editor></textarea>
+</div>

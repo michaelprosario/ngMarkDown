@@ -10,6 +10,7 @@ import { MarkdownService } from './services/markdown.service';
 export class AppComponent implements OnInit {
   title = 'ngMarkDown';
   markdownContent = '';
+  showPreview = true; // Preview visible by default
 
   constructor(private markdownService: MarkdownService) {}
 
@@ -28,5 +29,9 @@ export class AppComponent implements OnInit {
   handleFileImported(file: MarkdownFile): void {
     // Refresh the file list when a file is imported
     // This will be handled by the file-list component's subscription to the current file
+  }
+  
+  togglePreview(): void {
+    this.showPreview = !this.showPreview;
   }
 }

@@ -1,0 +1,11 @@
+.row {
+  transition: all 0.3s ease;
+}
+
+.col-md-4, .col-md-5, .col-md-9 {
+  transition: width 0.3s ease;
+}
+
+.btn {
+  transition: all 0.2s ease;
+}

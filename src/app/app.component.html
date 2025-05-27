@@ -8,15 +8,24 @@
     </div>
     
     <!-- Middle: Editor -->
-    <div class="col-md-4 mb-3">
+    <div [ngClass]="showPreview ? 'col-md-4' : 'col-md-9'" class="mb-3">
+      <div class="d-flex justify-content-end mb-2">
+        <button class="btn btn-sm" [ngClass]="showPreview ? 'btn-outline-secondary' : 'btn-outline-primary'" (click)="togglePreview()">
+          <i class="bi" [ngClass]="showPreview ? 'bi-eye-slash' : 'bi-eye'"></i>
+          {{ showPreview ? 'Hide Preview' : 'Show Preview' }}
+        </button>
+      </div>
       <app-editor (contentChanged)="updatePreview($event)"></app-editor>
     </div>
     
     <!-- Right: Preview -->
-    <div class="col-md-5 mb-3">
+    <div class="col-md-5 mb-3" *ngIf="showPreview">
       <div class="card h-100">
-        <div class="card-header bg-primary text-white">
-          Preview
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <span>Preview</span>
+          <button class="btn btn-sm btn-light" (click)="togglePreview()">
+            <i class="bi bi-eye-slash"></i>
+          </button>
         </div>
         <div class="card-body p-0">
           <app-preview [content]="markdownContent"></app-preview>

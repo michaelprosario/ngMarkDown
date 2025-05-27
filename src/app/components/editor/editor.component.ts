@@ -77,20 +77,45 @@ export class EditorComponent implements OnInit, OnDestroy {
         console.log('File updated successfully');
       } else {
         console.log('Creating new file');
-        const id = await this.markdownService.createFile(this.currentFile);
-        console.log('File created with ID:', id);
         
-        // Important: Create a new object to avoid reference issues
-        const savedFile = new MarkdownFile(
-          id,
-          this.currentFile.name,
-          this.currentFile.content,
-          this.currentFile.createdAt,
-          new Date()
-        );
-        
-        this.currentFile = savedFile;
-        this.markdownService.setCurrentFile(savedFile);
+        try {
+          // Create a proper file object
+          const fileToSave = new MarkdownFile(
+            undefined,
+            this.currentFile.name,
+            this.currentFile.content,
+            new Date(),
+            new Date()
+          );
+          
+          // Save to database
+          const id = await this.markdownService.createFile(fileToSave);
+          console.log('File created with ID:', id);
+          
+          if (id) {
+            // Create a new object with the ID to avoid reference issues
+            const savedFile = new MarkdownFile(
+              id,
+              fileToSave.name,
+              fileToSave.content,
+              fileToSave.createdAt,
+              fileToSave.updatedAt
+            );
+            
+            // Update the current file reference
+            this.currentFile = savedFile;
+            this.markdownService.setCurrentFile(savedFile);
+            
+            // Show feedback to the user
+            console.log('File saved successfully:', savedFile);
+            
+            // Instead of an alert, we could implement a non-blocking notification here
+            // For now, we'll use console log for feedback
+          }
+        } catch (error) {
+          console.error('Error saving file:', error);
+          alert('Failed to save file. Please try again.');
+        }
       }
       
       // Show success notification
